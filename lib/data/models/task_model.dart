@@ -8,7 +8,7 @@ extension TaskStatusX on TaskStatus {
   String get label {
     switch (this) {
       case TaskStatus.newTask:
-        return 'Новая';
+        return 'Не начата';
       case TaskStatus.inProgress:
         return 'В работе';
       case TaskStatus.done:
@@ -19,20 +19,22 @@ extension TaskStatusX on TaskStatus {
   String get apiValue {
     switch (this) {
       case TaskStatus.newTask:
-        return 'new';
+        return 'not_started';
       case TaskStatus.inProgress:
         return 'in_progress';
       case TaskStatus.done:
-        return 'done';
+        return 'completed';
     }
   }
 }
 
 TaskStatus taskStatusFromApiValue(String value) {
   switch (value) {
+    case 'not_started':
+      return TaskStatus.newTask;
     case 'in_progress':
       return TaskStatus.inProgress;
-    case 'done':
+    case 'completed':
       return TaskStatus.done;
     case 'new':
     default:
@@ -80,14 +82,33 @@ class TaskModel extends Equatable {
   }
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
+    int _parseXp(dynamic value) {
+      if (value is int) return value;
+      if (value is double) return value.toInt();
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    final xpFromApi = _parseXp(json['xp_reward']);
+    final xpFromPoint = _parseXp(json['point']);
+    final xpReward = xpFromApi != 0 ? xpFromApi : xpFromPoint;
+
     return TaskModel(
       id: json['id'].toString(),
-      title: json['title'] as String,
-      description: json['description'] as String? ?? '',
-      deadline: DateTime.parse(json['deadline'] as String),
-      status: taskStatusFromApiValue(json['status'] as String? ?? 'new'),
-      xpReward: json['xp_reward'] as int? ?? 10,
-      assignees: (json['assignees'] as List<dynamic>? ?? [])
+      title: json['title'] as String? ?? '',
+      description:
+          json['description'] as String? ??
+          json['task_desc'] as String? ??
+          '',
+      deadline: DateTime.tryParse(json['deadline']?.toString() ?? '') ??
+          DateTime.now(),
+      status: taskStatusFromApiValue(
+        json['status']?.toString() ?? 'not_started',
+      ),
+      xpReward: xpReward,
+      assignees: (json['assignees'] as List<dynamic>? ??
+              json['users'] as List<dynamic>? ??
+              [])
           .whereType<Map<String, dynamic>>()
           .map(UserModel.fromJson)
           .toList(),
@@ -98,11 +119,14 @@ class TaskModel extends Equatable {
     return {
       'id': id,
       'title': title,
-      'description': description,
+      'task_desc': description,
       'deadline': deadline.toIso8601String(),
       'status': status.apiValue,
-      'xp_reward': xpReward,
-      'assignees': assignees.map((user) => user.toJson()).toList(),
+      'point': xpReward,
+      'user_ids': assignees
+          .map((user) => int.tryParse(user.id))
+          .whereType<int>()
+          .toList(),
     };
   }
 

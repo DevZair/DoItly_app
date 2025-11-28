@@ -1,7 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'core/services/db_service.dart';
+import 'core/services/push_notification_service.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_text_styles.dart';
 import 'injection_container.dart';
@@ -9,11 +15,19 @@ import 'logic/auth_bloc/auth_bloc.dart';
 import 'logic/auth_bloc/auth_event.dart';
 import 'logic/task_bloc/task_bloc.dart';
 import 'presentation/routes/app_router.dart';
-import 'presentation/screens/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
+  LicenseRegistry.addLicense(() async* {
+    final license =
+        await rootBundle.loadString('assets/fonts/inter/OFL.txt');
+    yield LicenseEntryWithLineBreaks(['Inter'], license);
+  });
+  await Firebase.initializeApp();
+  await PushNotificationService.initialize();
   await initializeDateFormatting('ru_RU', null);
+  await DBService.initialize();
   await initDependencies();
   runApp(DoitlyApp());
 }
@@ -36,7 +50,6 @@ class DoitlyApp extends StatelessWidget {
         title: 'DoItly',
         debugShowCheckedModeBanner: false,
         theme: _buildTheme(),
-        initialRoute: LoginScreen.routeName,
         onGenerateRoute: _appRouter.onGenerateRoute,
       ),
     );
@@ -47,10 +60,7 @@ class DoitlyApp extends StatelessWidget {
       seedColor: AppColors.primary,
       brightness: Brightness.dark,
       surface: AppColors.surface,
-    ).copyWith(
-      secondary: AppColors.accent,
-      onSecondary: Colors.white,
-    );
+    ).copyWith(secondary: AppColors.accent, onSecondary: Colors.white);
 
     final base = ThemeData(
       useMaterial3: true,

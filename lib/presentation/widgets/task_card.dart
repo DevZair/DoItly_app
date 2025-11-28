@@ -7,87 +7,109 @@ import '../../data/models/task_model.dart';
 import '../../data/models/user_model.dart';
 
 class TaskCard extends StatelessWidget {
-  const TaskCard({super.key, required this.task, this.onStatusChanged});
+  const TaskCard({
+    super.key,
+    required this.task,
+    this.onStatusChanged,
+    this.onTap,
+  });
 
   final TaskModel task;
   final ValueChanged<TaskStatus>? onStatusChanged;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.surface, AppColors.surfaceAlt],
-        ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.12),
-            blurRadius: 28,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.title,
-                      style: AppTextStyles.screenTitle.copyWith(fontSize: 20),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(task.description, style: AppTextStyles.caption),
-                  ],
-                ),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.surface, AppColors.surfaceAlt],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.cardBorder),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                blurRadius: 28,
+                offset: const Offset(0, 18),
               ),
-              _StatusChip(task: task, onStatusChanged: onStatusChanged),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.calendar_today,
-                size: 16,
-                color: AppColors.textSecondary,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          task.title,
+                          style:
+                              AppTextStyles.screenTitle.copyWith(fontSize: 20),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          task.description,
+                          style: AppTextStyles.caption,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  _StatusChip(task: task, onStatusChanged: onStatusChanged),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text('Дедлайн · $_deadlineLabel', style: AppTextStyles.caption),
-              const Spacer(),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(Icons.bolt, size: 18, color: AppColors.primary),
-                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    '+${task.xpReward} XP',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.accent,
-                    ),
+                    'Дедлайн · $_deadlineLabel',
+                    style: AppTextStyles.caption,
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Icon(Icons.bolt, size: 18, color: AppColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '+${task.xpReward} XP',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.accent,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Divider(color: AppColors.cardBorder.withValues(alpha: 0.5)),
+              if (task.assignees.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text('Исполнители', style: AppTextStyles.caption),
+                const SizedBox(height: 8),
+                _AssigneeStrip(assignees: task.assignees),
+              ],
             ],
           ),
-          const SizedBox(height: 12),
-          Divider(color: AppColors.cardBorder.withValues(alpha: 0.5)),
-          if (task.assignees.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text('Исполнители', style: AppTextStyles.caption),
-            const SizedBox(height: 8),
-            _AssigneeStrip(assignees: task.assignees),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -106,6 +128,7 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _chipColor(task.status);
     return PopupMenuButton<TaskStatus>(
+      enabled: onStatusChanged != null,
       onSelected: onStatusChanged,
       itemBuilder: (context) => TaskStatus.values
           .map(
@@ -176,8 +199,8 @@ class _AssigneeStrip extends StatelessWidget {
                       radius: 14,
                       backgroundColor: Color(displayUsers[i].avatarColor),
                       child: Text(
-                        displayUsers[i].name.isNotEmpty
-                            ? displayUsers[i].name[0].toUpperCase()
+                        displayUsers[i].displayName.isNotEmpty
+                            ? displayUsers[i].displayName[0].toUpperCase()
                             : '?',
                         style: const TextStyle(
                           color: Colors.white,
@@ -193,7 +216,9 @@ class _AssigneeStrip extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: Text(
-            assignees.map((user) => user.name.split(' ').first).join(', '),
+            assignees
+                .map((user) => user.displayName.split(' ').first)
+                .join(', '),
             style: AppTextStyles.caption.copyWith(color: AppColors.textPrimary),
             overflow: TextOverflow.ellipsis,
           ),

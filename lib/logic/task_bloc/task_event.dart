@@ -23,15 +23,23 @@ class CreateTaskEvent extends TaskEvent {
     required this.description,
     required this.deadline,
     required this.assigneeIds,
+    required this.xpReward,
   });
 
   final String title;
   final String description;
   final DateTime deadline;
   final List<String> assigneeIds;
+  final int xpReward;
 
   @override
-  List<Object?> get props => [title, description, deadline, assigneeIds];
+  List<Object?> get props => [
+    title,
+    description,
+    deadline,
+    assigneeIds,
+    xpReward,
+  ];
 }
 
 class UpdateTaskStatusEvent extends TaskEvent {

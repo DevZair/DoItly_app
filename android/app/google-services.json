@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "546857477256",
+    "project_id": "doitly-za",
+    "storage_bucket": "doitly-za.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:546857477256:android:b6a278ff5e3b215c3a2b3d",
+        "android_client_info": {
+          "package_name": "com.ithub.dotitly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWD8HGHLtfJV7h5a1xQHBgiRZ2dFo7d7w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:546857477256:android:4ee83f012107bfc23a2b3d",
+        "android_client_info": {
+          "package_name": "com.ithub.dotitly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWD8HGHLtfJV7h5a1xQHBgiRZ2dFo7d7w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
@@ -25,6 +26,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _pointsController = TextEditingController();
   DateTime? _deadline;
   bool _isSubmitting = false;
   bool _isLoadingUsers = true;
@@ -43,6 +45,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _pointsController.dispose();
     super.dispose();
   }
 
@@ -95,7 +98,27 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                         maxLines: 4,
                         validator: (value) => value == null || value.isEmpty
                             ? 'Добавьте описание'
-                            : null,
+                            : null
+                      ),
+                      //Сколько очков
+                      _buildTextField(
+                        controller: _pointsController,
+                        label: 'Сколько очков',
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Укажите количество очков';
+                          }
+                          final parsed = int.tryParse(value);
+                          if (parsed == null) {
+                            return 'Введите число';
+                          }
+                          if (parsed <= 0) {
+                            return 'Количество должно быть больше 0';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 20),
                       Text('Назначить', style: AppTextStyles.caption),
@@ -159,6 +182,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     required String label,
     int maxLines = 1,
     String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,6 +194,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           controller: controller,
           maxLines: maxLines,
           validator: validator,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.surfaceAlt,
@@ -212,11 +239,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       children: _availableUsers
           .map(
             (user) => FilterChip(
-              label: Text(user.name),
+              label: Text(user.displayName),
               avatar: CircleAvatar(
                 backgroundColor: Color(user.avatarColor),
                 child: Text(
-                  user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                  user.displayName.isNotEmpty
+                      ? user.displayName[0].toUpperCase()
+                      : '?',
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
@@ -313,6 +342,21 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       return;
     }
 
+    if (!_deadline!.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Дедлайн должен быть в будущем')),
+      );
+      return;
+    }
+
+    final xpReward = int.tryParse(_pointsController.text.trim());
+    if (xpReward == null || xpReward <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите корректное количество очков')),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     context.read<TaskBloc>().add(
@@ -321,6 +365,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         description: _descriptionController.text.trim(),
         deadline: _deadline!,
         assigneeIds: _selectedUsers.map((user) => user.id).toList(),
+        xpReward: xpReward,
       ),
     );
   }

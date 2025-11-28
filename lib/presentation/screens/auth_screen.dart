@@ -11,25 +11,33 @@ import '../../logic/task_bloc/task_event.dart';
 import '../widgets/floating_shapes_background.dart';
 import 'home_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ReScreen extends StatefulWidget {
+  const ReScreen({super.key});
 
-  static const routeName = '/login';
+  static const routeName = '/register';
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ReScreen> createState() => _ReScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ReScreenState extends State<ReScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _surnameController = TextEditingController();
+  final _nicknameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = false;
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _surnameController.dispose();
+    _nicknameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -68,12 +76,53 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 48),
-                            Text(
-                              'С возвращением в',
-                              style: AppTextStyles.caption,
-                            ),
                             Text('DoItly', style: AppTextStyles.screenTitle),
                             const SizedBox(height: 24),
+                            _buildTextField(
+                              label: 'Имя',
+                              controller: _nameController,
+                              hintText: 'Как вас зовут?',
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Введите имя';
+                                }
+                                if (value.trim().length < 2) {
+                                  return 'Минимум 2 символа';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildTextField(
+                              label: 'Фамилия',
+                              controller: _surnameController,
+                              hintText: 'Введите фамилию',
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Введите фамилию';
+                                }
+                                if (value.trim().length < 2) {
+                                  return 'Минимум 2 символа';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildTextField(
+                              label: 'Никнейм',
+                              controller: _nicknameController,
+                              hintText: 'Уникальное имя пользователя',
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Введите никнейм';
+                                }
+                                if (value.trim().length < 3) {
+                                  return 'Минимум 3 символа';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
                             _buildTextField(
                               label: 'E-mail',
                               controller: _emailController,
@@ -119,25 +168,52 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
+                            const SizedBox(height: 16),
+
+                            _buildTextField(
+                              label: 'Подтвердите пароль',
+                              controller: _confirmPasswordController,
+                              hintText: "Повторите пароль",
+                              obscureText: !_obscurePassword,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  !_obscurePassword
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Повторите пароль';
+                                }
+                                if (value.length < 8) {
+                                  return 'Минимум 8 символов';
+                                }
+                                if (value != _passwordController.text) {
+                                  return 'Пароли не совпадают';
+                                }
+                                return null;
+                              },
+                            ),
                             const SizedBox(height: 32),
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: isLoading ? null : _login,
-                                child: const Text('Войти'),
+                                onPressed: isLoading ? null : _register,
+                                child: const Text('Зарегистрироваться'),
                               ),
                             ),
-                            const SizedBox(height: 16),
                             Center(
                               child: TextButton(
                                 onPressed: () {
                                   Navigator.of(
                                     context,
-                                  ).pushReplacementNamed('/register');
+                                  ).pushReplacementNamed('/login');
                                 },
-                                child: const Text(
-                                  'Нет аккаунта? Зарегистрируйтесь',
-                                ),
+                                child: const Text('Уже есть аккаунт? Войдите'),
                               ),
                             ),
                           ],
@@ -193,10 +269,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _login() {
+  void _register() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
-        LoginRequested(
+        RegisterRequested(
+          name: _nameController.text.trim(),
+          surname: _surnameController.text.trim(),
+          nickname: _nicknameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
         ),

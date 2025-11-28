@@ -16,6 +16,7 @@ import '../widgets/task_card.dart';
 import 'create_task_screen.dart';
 import 'leaderboard_screen.dart';
 import 'profile_screen.dart';
+import 'task_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -113,9 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          icon: const Icon(Icons.add),
-          label: const Text('Задача'),
+        floatingActionButton: FloatingActionButton(
+          child: const Icon(Icons.add),
+
           onPressed: () =>
               Navigator.of(context).pushNamed(CreateTaskScreen.routeName),
         ),
@@ -165,7 +166,13 @@ class _HomeScreenState extends State<HomeScreen> {
           final task = tasks[index];
           return TaskCard(
             task: task,
-            onStatusChanged: (status) => _handleStatusChange(task, status),
+            onStatusChanged: task.status == TaskStatus.done
+                ? null
+                : (status) => _handleStatusChange(task, status),
+            onTap: () => Navigator.of(context).pushNamed(
+              TaskDetailScreen.routeName,
+              arguments: task,
+            ),
           );
         },
         separatorBuilder: (_, __) => const SizedBox(height: 16),

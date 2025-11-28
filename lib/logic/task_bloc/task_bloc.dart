@@ -50,6 +50,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         description: event.description,
         deadline: event.deadline,
         assigneeIds: event.assigneeIds,
+        xpReward: event.xpReward,
       );
       final updatedTasks = _currentTasks()
         ..removeWhere((task) => task.id == newTask.id)
@@ -92,7 +93,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           tasks: updatedTasks,
           message: 'Статус обновлён!',
           actionType: TaskActionType.update,
-          xpReward: result.xpReward,
+          xpReward:
+              event.status == TaskStatus.done ? result.xpReward : null,
         ),
       );
     } catch (_) {
